@@ -1,0 +1,136 @@
+[tool.poetry]
+name = "openweb-thematic"
+version = "1.0.0a1"
+description = "Themes and topic tracking and discovery."
+keywords = ["theme", "topics", "topic-modelling", "clustering", "nlp", "text"]
+authors = ["eterna2 <eterna2@hotmail.com>"]
+maintainers = ["eterna2 <eterna2@hotmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [
+    {include = "openweb"},
+    {include = "openweb/thematic/py.typed"}
+]
+exclude = ["openweb/*_test.py", "openweb/**/*_test.py", "openweb/conftest.py"]
+homepage = "https://github.com/openweb-ai/thematic"
+repository = "https://github.com/openweb-ai/thematic"
+documentation = "https://openweb-thematic.readthedocs.io/en/latest/"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/openweb-ai/thematic/blob/master/CHANGELOG.md"
+
+[tool.poetry.dependencies]
+python = ">=3.7.1,<3.11"
+sentence-transformers = {version = "2.*", optional = true}
+torch = {version = "*", optional = true}
+
+[tool.poetry.extras]
+torch = ["torch"]
+sbert = ["sentence-transformers"]
+ci = ["torch", "sentence-transformers"]
+
+[tool.poetry.dev-dependencies]
+black = {version = "*", allow-prereleases = true}
+mypy = "0.*"
+pylint = "2.*"
+bandit = "*"
+flake8 = "3.*"
+flake8-isort = "*"
+flake8-comprehensions = "*"
+coverage = "5.*"
+coveralls = "2.*"
+requests_mock = "1.*"
+pytest = "6.*"
+pytest-mock = "3.*"
+autoflake = "1.*"
+pytest-cov = "2.*"
+safety = "*"
+mkdocs-material = "8.*"
+mkdocstrings = "*"
+mkdocs-git-revision-date-localized-plugin = "*"
+markdown_include = "*"
+isort = "5.*"
+livereload = "2.*"  # see https://github.com/mkdocstrings/mkdocstrings/issues/295
+
+[tool.isort]
+profile = "black"
+known_first_party = ["iotoolz"]
+known_third_party = [
+    "magic",
+    "toolz",
+    "cytoolz",
+    "requests_toolbelt",
+    "pydantic",
+    "toml",
+    "magic",
+]
+# indent = '    '
+# multi_line_output = 3
+# length_sort = 1
+# lines_between_types = 1
+
+[tool.black]
+target-version = ["py37", "py38", "py39", "py310"]
+line_length = 88
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+exclude = [
+    # '^file1\.py$',  # TOML literal string (single-quotes, no escaping necessary)
+    # "^file2\\.py$",  # TOML basic string (double-quotes, backslash and other characters need escaping)
+]
+
+# [[tool.mypy.overrides]]
+# module = "mycode.foo.*"
+# disallow_untyped_defs = true
+
+# [[tool.mypy.overrides]]
+# module = "mycode.bar"
+# warn_return_any = false
+
+# [[tool.mypy.overrides]]
+# module = [
+#     "somelibrary",
+#     "some_other_library"
+# ]
+# ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "openweb",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["openweb"]
+omit = [
+    "openweb/*_test.py",
+    "openweb/__init__.py",
+    "openweb/**/*_test.py",
+    "openweb/**/__init__.py",
+    "openweb/thematic/third_party/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "def __str__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:"
+]
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
