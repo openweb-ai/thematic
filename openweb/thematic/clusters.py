@@ -1,83 +1,78 @@
 """
 Module to do multi-resolution clustering.
 """
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    NamedTuple,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Iterable, List, cast
+
+import numpy as np
 
 from openweb.thematic.third_party import community_detection
 
 
-class MultiResCluster(NamedTuple):
-    threshold: float
-    min_community_size: int
-    cluster_ids: Tuple[int, ...]
+class FastCommunityDetection:
+    """sentence_transformers fast community detection wrapped with sklearn interace."""
+
+    def __init__(self, threshold=0.75, min_community_size=10, init_max_size=1000):
+        self._kwargs = {
+            "threshold": threshold,
+            "min_community_size": min_community_size,
+            "init_max_size": init_max_size,
+        }
+        self.labels_: np.ndarray = np.array([])
+        self.cluster_centers_: np.ndarray = np.ndarray([])
+
+    def fit(
+        self,
+        X,
+        y=None,  # pylint: disable=unused-argument
+    ) -> "FastCommunityDetection":
+        self.labels_ = np.repeat(-1, len(X))
+        cluster_centers = cast(List[int], [])
+        clusters = community_detection(X, **self._kwargs)
+        for cluster_id, cluster in enumerate(clusters):
+            cluster_centers.append(X[cluster[0]])
+            for idx in cluster:
+                self.labels_[idx] = cluster_id
+        self.cluster_centers_ = np.array(cluster_centers)
+        return self
+
+    def fit_predict(self, X, y=None) -> np.ndarray:
+        return self.fit(X, y).labels_
 
 
-def _normalize_params(
-    thresholds: Sequence[float],
-    min_community_sizes: Union[Sequence[int], int],
-) -> Iterable[Tuple[float, int]]:
-    min_community_sizes = list(
-        [min_community_sizes] * len(thresholds)
-        if isinstance(min_community_sizes, int)
-        else min_community_sizes
-    )
-    len_comm_size = len(min_community_sizes)
-    len_thresholds = len(thresholds)
-    if len_comm_size > len_thresholds:
-        min_community_sizes = min_community_sizes[:len_thresholds]
-    elif len_comm_size < len_thresholds:
-        min_community_sizes += [min_community_sizes[-1]] * (
-            len_thresholds - len_comm_size
-        )
-    return zip(thresholds, min_community_sizes)
+class MultiResCommunityDetection:
+    """multi-resolution community detection"""
 
+    methods = {"fast_community_detection": FastCommunityDetection}
 
-def community_detection_multi_res(
-    embeddings: Any,
-    thresholds: Sequence[float] = (0.9, 0.8, 0.7, 0.6, 0.5),
-    min_community_sizes: Union[Sequence[int], int] = 10,
-    init_max_size: int = 1000,
-) -> Iterator[MultiResCluster]:
-    in_clusters: Set[int] = set()
-
-    for threshold, min_community_size in _normalize_params(
-        thresholds, min_community_sizes
+    def __init__(
+        self,
+        params: Iterable[dict],
     ):
-        # get the indexes and embeddings that are not in any clusters yet
-        indexes, unclustered_embeddings = zip(
-            *[
-                (idx, embedding)
-                for idx, embedding in enumerate(embeddings)
-                if idx not in in_clusters
-            ]
-        )
-        # create a mapping of new indexes to original indexes
-        lookup: Dict[int, int] = dict(enumerate(indexes))
-        # do community detection
-        clusters = community_detection(
-            unclustered_embeddings,
-            threshold=threshold,
-            min_community_size=min_community_size,
-            init_max_size=init_max_size,
-        )
-        for cluster in clusters:
-            # get the original indexes
-            cluster_ids = tuple((lookup[idx] for idx in cluster))
-            # remember which indexes are already clustered
-            for idx in cluster_ids:
-                in_clusters.add(idx)
-            yield MultiResCluster(
-                threshold=threshold,
-                min_community_size=min_community_size,
-                cluster_ids=cluster_ids,
+        self._params = params
+        self._factory = FastCommunityDetection
+        self.labels_: np.ndarray = np.array([])
+        self.cluster_centers_: np.ndarray = np.ndarray([])
+
+    def fit(
+        self,
+        X,
+        y=None,  # pylint: disable=unused-argument
+    ) -> "MultiResCommunityDetection":
+        self.labels_ = np.repeat(-1, len(X))
+        cluster_centers = cast(List[int], [])
+        mutable_x = X
+        indices = np.array(range(len(X)))
+        cluster_cnt = 0
+        for kwargs in self._params:
+            model = self._factory(**kwargs)
+            labels = model.fit_predict(mutable_x)
+            cluster_centers += model.cluster_centers_
+            cluster_cnt += max(labels) + 1
+            mutable_x = mutable_x[labels < 0]
+            indices = indices[labels < 0]
+            np.put(
+                self.labels_,
+                ind=indices[np.argwhere(labels > 0).reshape(-1)],
+                v=labels[labels > 0] + cluster_cnt,
             )
+        return self

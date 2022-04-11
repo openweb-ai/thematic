@@ -55,6 +55,7 @@ mkdocs-git-revision-date-localized-plugin = "*"
 markdown_include = "*"
 isort = "5.*"
 livereload = "2.*"  # see https://github.com/mkdocstrings/mkdocstrings/issues/295
+jupyter = "^1.0.0"
 
 [tool.isort]
 profile = "black"
