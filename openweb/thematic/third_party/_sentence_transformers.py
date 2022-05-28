@@ -69,9 +69,6 @@ def community_detection_from_conjugate(
     # Maximum size for community
     init_max_size = min(init_max_size, conjugate.shape[0])
 
-    # # Minimum size for a community
-    # top_k_values, _ = conjugate.topk(k=min_community_size, largest=True)
-
     # Filter for rows >= min_threshold
     extracted_communities = []
     for i in range(conjugate.shape[0]):
