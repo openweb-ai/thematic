@@ -8,8 +8,11 @@ https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformer
 
 Modified by:
 eterna2 <eterna2@hotmail.com>
+marc-chan <marc.w.chan@gmail.com>
 """
+from typing import Union, List
 import torch
+import numpy as np
 
 
 def cos_sim(tensor_a: torch.Tensor, tensor_b: torch.Tensor):
@@ -34,33 +37,52 @@ def cos_sim(tensor_a: torch.Tensor, tensor_b: torch.Tensor):
     return torch.mm(a_norm, b_norm.transpose(0, 1))
 
 
-def community_detection(
-    embeddings, threshold=0.75, min_community_size=10, init_max_size=1000
+def community_detection_from_conjugate(
+    conjugate: Union[np.ndarray, torch.Tensor],
+    member_counts: Union[List, np.ndarray, torch.Tensor] = None,
+    threshold: float = 0.75,
+    min_community_size: int = 10,
+    init_max_size: int = 1000
 ):
     """
     Function for Fast Community Detection
     Finds in the embeddings all communities, i.e. embeddings that are close (closer than threshold).
     Returns only communities that are larger than min_community_size. The communities are returned
     in decreasing order. The first element in each list is the central point in the community.
+
+    Adapted from "sentence-transformers.util.community_detection", with modification to allow member counts
+    to be passed in for multilevel clustering. Separate calculation of conjugate to allow custom similarity
+    matrices to be used.
     """
 
+    if not isinstance(conjugate, torch.Tensor):
+        conjugate = torch.Tensor(conjugate)
+    
+    if member_counts is None:
+        member_counts = np.ones(len(conjugate), dtype=int)
+    else:
+        member_counts = np.array(member_counts)
+    
+    if len(member_counts) != conjugate.shape[0]:
+        raise ValueError("`member_counts` and `conjugate` should be of equal length.")
+
     # Maximum size for community
-    init_max_size = min(init_max_size, len(embeddings))
+    init_max_size = min(init_max_size, conjugate.shape[0])
 
-    # Compute cosine similarity scores
-    cos_scores = cos_sim(embeddings, embeddings)
-
-    # Minimum size for a community
-    top_k_values, _ = cos_scores.topk(k=min_community_size, largest=True)
+    # # Minimum size for a community
+    # top_k_values, _ = conjugate.topk(k=min_community_size, largest=True)
 
     # Filter for rows >= min_threshold
     extracted_communities = []
-    for i in range(len(top_k_values)):
-        if top_k_values[i][-1] >= threshold:
+    for i in range(conjugate.shape[0]):
+        abv_thres_idx = (conjugate[i] >= threshold).argwhere().flatten()
+        size = member_counts[abv_thres_idx].sum()
+
+        if size >= min_community_size:
             new_cluster = []
 
             # Only check top k most similar entries
-            top_val_large, top_idx_large = cos_scores[i].topk(
+            top_val_large, top_idx_large = conjugate[i].topk(
                 k=init_max_size, largest=True
             )
             top_idx_large = top_idx_large.tolist()
@@ -74,7 +96,7 @@ def community_detection(
                     new_cluster.append(idx)
             else:
                 # Iterate over all entries (slow)
-                for idx, val in enumerate(cos_scores[i].tolist()):
+                for idx, val in enumerate(conjugate[i].tolist()):
                     if val >= threshold:
                         new_cluster.append(idx)
 
@@ -99,4 +121,32 @@ def community_detection(
             for idx in community:
                 extracted_ids.add(idx)
 
+    return unique_communities
+
+
+def community_detection(
+    embeddings: Union[np.ndarray, torch.Tensor],
+    member_counts: Union[List, np.ndarray, torch.Tensor] = None,
+    threshold: float = 0.75,
+    min_community_size: int = 10,
+    init_max_size: int = 1000
+):
+    """
+    Function for Fast Community Detection
+    Finds in the embeddings all communities, i.e. embeddings that are close (closer than threshold).
+    Returns only communities that are larger than min_community_size. The communities are returned
+    in decreasing order. The first element in each list is the central point in the community.
+
+    Adapted from "sentence-transformers.util.community_detection", with modification to allow member counts
+    to be passed in for multilevel clustering. Separate calculation of conjugate to allow custom similarity
+    matrices to be used.
+    """
+
+    conjugate = cos_sim(embeddings, embeddings)
+    unique_communities = community_detection_from_conjugate(
+        conjugate,
+        member_counts=member_counts,
+        threshold=threshold,
+        min_community_size=min_community_size,
+        init_max_size=init_max_size)
     return unique_communities

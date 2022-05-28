@@ -126,6 +126,10 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
+<<<<<<< HEAD
 .pyre/
 
 tmp/
+=======
+.pyre/
+>>>>>>> modified original `community_detection` function from sentence-transformers to allow for custom conjugates and multi-level clustering
