@@ -10,9 +10,10 @@ Modified by:
 eterna2 <eterna2@hotmail.com>
 marc-chan <marc.w.chan@gmail.com>
 """
-from typing import Union, List
-import torch
+from typing import List, Union
+
 import numpy as np
+import torch
 
 
 def cos_sim(tensor_a: torch.Tensor, tensor_b: torch.Tensor):
@@ -25,6 +26,9 @@ def cos_sim(tensor_a: torch.Tensor, tensor_b: torch.Tensor):
 
     if not isinstance(tensor_b, torch.Tensor):
         tensor_b = torch.tensor(tensor_b)
+
+    if (len(tensor_a) == 0) or (len(tensor_b) == 0):
+        return torch.tensor([])
 
     if len(tensor_a.shape) == 1:
         tensor_a = tensor_a.unsqueeze(0)
@@ -42,7 +46,7 @@ def community_detection_from_conjugate(
     member_counts: Union[List, np.ndarray, torch.Tensor] = None,
     threshold: float = 0.75,
     min_community_size: int = 10,
-    init_max_size: int = 1000
+    init_max_size: int = 1000,
 ):
     """
     Function for Fast Community Detection
@@ -57,12 +61,12 @@ def community_detection_from_conjugate(
 
     if not isinstance(conjugate, torch.Tensor):
         conjugate = torch.Tensor(conjugate)
-    
+
     if member_counts is None:
         member_counts = np.ones(len(conjugate), dtype=int)
     else:
         member_counts = np.array(member_counts)
-    
+
     if len(member_counts) != conjugate.shape[0]:
         raise ValueError("`member_counts` and `conjugate` should be of equal length.")
 
@@ -126,7 +130,7 @@ def community_detection(
     member_counts: Union[List, np.ndarray, torch.Tensor] = None,
     threshold: float = 0.75,
     min_community_size: int = 10,
-    init_max_size: int = 1000
+    init_max_size: int = 1000,
 ):
     """
     Function for Fast Community Detection
@@ -145,5 +149,6 @@ def community_detection(
         member_counts=member_counts,
         threshold=threshold,
         min_community_size=min_community_size,
-        init_max_size=init_max_size)
+        init_max_size=init_max_size,
+    )
     return unique_communities

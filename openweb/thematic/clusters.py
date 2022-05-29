@@ -25,7 +25,7 @@ class FastCommunityDetection:
         self,
         X,
         y=None,  # pylint: disable=unused-argument
-        member_counts: Union[List[int], np.ndarray] = None
+        member_counts: Union[List[int], np.ndarray] = None,
     ) -> "FastCommunityDetection":
         self.labels_ = np.repeat(-1, len(X))
         cluster_centers = cast(List[int], [])
@@ -37,7 +37,9 @@ class FastCommunityDetection:
         self.cluster_centers_ = np.array(cluster_centers)
         return self
 
-    def fit_predict(self, X, y=None, member_counts: Union[List[int], np.ndarray] = None) -> np.ndarray:
+    def fit_predict(
+        self, X, y=None, member_counts: Union[List[int], np.ndarray] = None
+    ) -> np.ndarray:
         return self.fit(X, y, member_counts=member_counts).labels_
 
 
@@ -61,13 +63,13 @@ class MultiResCommunityDetection:
         self,
         X,
         y=None,  # pylint: disable=unused-argument
-        member_counts: Union[List[int], np.ndarray] = None
+        member_counts: Union[List[int], np.ndarray] = None,
     ) -> "MultiResCommunityDetection":
         self.labels_ = np.repeat(-1, len(X))
         cluster_centers = cast(List[int], [])
         mutable_x = np.array(X)
         indices = np.array(range(len(X)))
-        if mutable_member_counts is not None:
+        if member_counts is not None:
             mutable_member_counts = np.array(member_counts).flatten()
         else:
             mutable_member_counts = np.ones(len(X))
