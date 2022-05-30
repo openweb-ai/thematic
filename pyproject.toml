@@ -56,6 +56,7 @@ markdown_include = "*"
 isort = "5.*"
 livereload = "2.*"  # see https://github.com/mkdocstrings/mkdocstrings/issues/295
 jupyter = "^1.0.0"
+scikit-learn = "*"
 
 [tool.isort]
 profile = "black"
@@ -80,6 +81,7 @@ line_length = 88
 
 [tool.mypy]
 python_version = "3.7"
+plugins = "numpy.typing.mypy_plugin"
 warn_return_any = true
 warn_unused_configs = true
 exclude = [
@@ -95,12 +97,11 @@ exclude = [
 # module = "mycode.bar"
 # warn_return_any = false
 
-# [[tool.mypy.overrides]]
-# module = [
-#     "somelibrary",
-#     "some_other_library"
-# ]
-# ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.datasets",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"

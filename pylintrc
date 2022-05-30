@@ -12,7 +12,7 @@ ignore=third_party
 
 # Files or directories matching the regex patterns are skipped. The regex
 # matches against base names, not paths.
-ignore-patterns=__init__
+ignore-patterns=__init__,.*test*
 
 # Pickle collected data for later comparisons.
 persistent=no

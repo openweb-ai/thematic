@@ -1,6 +1,7 @@
 """
 Module to do multi-resolution clustering.
 """
+import logging
 from typing import Iterable, List, cast
 
 import numpy as np
@@ -47,11 +48,13 @@ class MultiResCommunityDetection:
     def __init__(
         self,
         params: Iterable[dict],
+        logger: logging.Logger = logging.getLogger(__name__),
     ):
-        self._params = params
+        self._params = list(params)
         self._factory = FastCommunityDetection
         self.labels_: np.ndarray = np.array([])
         self.cluster_centers_: np.ndarray = np.ndarray([])
+        self._logger = logger
 
     def fit(
         self,
@@ -60,19 +63,29 @@ class MultiResCommunityDetection:
     ) -> "MultiResCommunityDetection":
         self.labels_ = np.repeat(-1, len(X))
         cluster_centers = cast(List[int], [])
-        mutable_x = X
+        mutable_x = np.array(X)
         indices = np.array(range(len(X)))
         cluster_cnt = 0
-        for kwargs in self._params:
+        for idx, kwargs in enumerate(self._params):
+            if len(mutable_x) == 0:
+                self._logger.info("all items has been assigned to a cluster")
+                break
+
             model = self._factory(**kwargs)
+            self._logger.info("created model #%s: %s", idx, kwargs)
+
             labels = model.fit_predict(mutable_x)
-            cluster_centers += model.cluster_centers_
+            centers = model.cluster_centers_.tolist()
+            self._logger.info("found %s clusters", len(centers))
+
+            cluster_centers += centers
+            np.put(
+                self.labels_,
+                ind=indices[np.argwhere(labels >= 0).reshape(-1)],
+                v=labels[labels >= 0] + cluster_cnt,
+            )
             cluster_cnt += max(labels) + 1
             mutable_x = mutable_x[labels < 0]
             indices = indices[labels < 0]
-            np.put(
-                self.labels_,
-                ind=indices[np.argwhere(labels > 0).reshape(-1)],
-                v=labels[labels > 0] + cluster_cnt,
-            )
+        self.cluster_centers_ = np.array(cluster_centers)
         return self
