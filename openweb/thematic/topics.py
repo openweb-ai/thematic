@@ -9,6 +9,7 @@ from openweb.thematic.clusters import FastCommunityDetection, MultiResCommunityD
 
 class SemanticTopicModel:
     """Implement 2-level clustering for topic modelling"""
+
     def __init__(
         self,
         unit_threshold: float = 0.85,
