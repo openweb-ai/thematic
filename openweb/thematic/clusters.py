@@ -92,9 +92,9 @@ class MultiResCommunityDetection:
                 ind=indices[np.argwhere(labels >= 0).reshape(-1)],
                 v=labels[labels >= 0] + cluster_cnt,
             )
-            cluster_cnt += max(self.labels_) + 1
+            cluster_cnt += max(labels) + 1
             mutable_x = mutable_x[labels < 0]
             indices = indices[labels < 0]
             mutable_member_counts = mutable_member_counts[labels < 0]
-        self.cluster_center_ = np.array(cluster_centers)
+        self.cluster_centers_ = np.array(cluster_centers)
         return self
