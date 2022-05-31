@@ -19,4 +19,4 @@ exclude =
     dist,
     __init__.py,
     tmp,
-max-complexity = 13
+max-complexity = 16
