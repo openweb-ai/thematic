@@ -96,6 +96,5 @@ class MultiResCommunityDetection:
             mutable_x = mutable_x[labels < 0]
             indices = indices[labels < 0]
             mutable_member_counts = mutable_member_counts[labels < 0]
-
         self.cluster_center_ = np.array(cluster_centers)
         return self
