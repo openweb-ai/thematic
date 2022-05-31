@@ -16,7 +16,9 @@ import numpy as np
 import torch
 
 
-def cos_sim(tensor_a: torch.Tensor, tensor_b: torch.Tensor):
+def cos_sim(
+    tensor_a: Union[np.ndarray, torch.Tensor], tensor_b: Union[np.ndarray, torch.Tensor]
+):
     """
     Computes the cosine similarity cos_sim(a[i], b[j]) for all i and j.
     :return: Matrix with res[i][j]  = cos_sim(a[i], b[j])
@@ -60,7 +62,7 @@ def community_detection_from_conjugate(
     """
 
     if not isinstance(conjugate, torch.Tensor):
-        conjugate = torch.Tensor(conjugate)
+        conjugate = torch.tensor(conjugate)
 
     if member_counts is None:
         member_counts = np.ones(len(conjugate), dtype=int)
@@ -86,11 +88,9 @@ def community_detection_from_conjugate(
             top_val_large, top_idx_large = conjugate[i].topk(
                 k=init_max_size, largest=True
             )
-            top_idx_large = top_idx_large.tolist()
-            top_val_large = top_val_large.tolist()
 
             if top_val_large[-1] < threshold:
-                for idx, val in zip(top_idx_large, top_val_large):
+                for idx, val in zip(top_idx_large.tolist(), top_val_large.tolist()):
                     if val < threshold:
                         break
 
